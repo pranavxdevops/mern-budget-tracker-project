@@ -1,0 +1,49 @@
+variables:
+  IMAGE_NAME: pranavdazzler007/gitlab-pythondjango
+  IMAGE_TAG: "${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHORT_SHA}"
+
+stages:
+  - build
+  - deploy
+
+
+build_image:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
+  script:
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    - docker push $IMAGE_NAME:$IMAGE_TAG
+
+
+#deploy:
+  #stage: deploy
+  #before_script:
+    #- chmod 400 $SSH
+  #script:
+    #- ssh -o StrictHostKeyChecking=no -i $SSH ubuntu@$AWS_IP_ADDRESS "
+        #docker login -u $REGISTRY_USER -p $REGISTRY_PASS &&
+        #docker ps -aq | xargs docker stop | xargs docker rm &&
+        ##docker run -d -p 8000:8000 $IMAGE_NAME:$IMAGE_TAG"
+deploy:
+  stage: deploy
+  before_script:
+    - chmod 400 $SSH
+    - scp -o StrictHostKeyChecking=no -i $SSH ./docker-compose.yml ubuntu@$AWS_IP_ADDRESS:/home/ubuntu
+
+  variables:
+    IMAGE_NAME: pranavdazzler007/gitlab-pythondjango
+    IMAGE_TAG: "${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHORT_SHA}"
+
+  script:
+    - ssh -o StrictHostKeyChecking=no -i $SSH ubuntu@$AWS_IP_ADDRESS "
+      docker login -u $REGISTRY_USER -p $REGISTRY_PASS &&
+      
+      export DC_IMAGE_NAME=$IMAGE_NAME &&
+      export DC_IMAGE_TAG=$IMAGE_TAG &&
+
+      docker compose down &&
+      docker compose up -d"
