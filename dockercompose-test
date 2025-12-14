@@ -1,8 +1,8 @@
-version: "3.9"
+version: '3.9'
 
 services:
   backend:
-    image: ${BACKEND_IMAGE}:${IMAGE_TAG}
+    build: ./backend
     container_name: budget-backend
     ports:
       - "5000:5000"
@@ -11,7 +11,7 @@ services:
     restart: always
 
   frontend:
-    image: ${FRONTEND_IMAGE}:${IMAGE_TAG}
+    build: ./frontend
     container_name: budget-frontend
     ports:
       - "80:80"

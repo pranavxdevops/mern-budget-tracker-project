@@ -1,13 +1,16 @@
 variables:
-  IMAGE_NAME: pranavdazzler007/gitlab-pythondjango
+  BACKEND_IMAGE: pranavxdevops/budget-backend
+  FRONTEND_IMAGE: pranavxdevops/budget-frontend
   IMAGE_TAG: "${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHORT_SHA}"
 
 stages:
   - build
   - deploy
 
-
-build_image:
+# ----------------------
+# BUILD BACKEND IMAGE
+# --------------------
+build_backend:
   stage: build
   image: docker:latest
   services:
@@ -15,35 +18,40 @@ build_image:
   before_script:
     - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
   script:
-    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
-    - docker push $IMAGE_NAME:$IMAGE_TAG
+    - docker build -t $BACKEND_IMAGE:$IMAGE_TAG ./backend
+    - docker push $BACKEND_IMAGE:$IMAGE_TAG
 
+# ----------------------
+# BUILD FRONTEND IMAGE
+# ----------------------
+build_frontend:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
+  script:
+    - docker build -t $FRONTEND_IMAGE:$IMAGE_TAG ./frontend
+    - docker push $FRONTEND_IMAGE:$IMAGE_TAG
 
-#deploy:
-  #stage: deploy
-  #before_script:
-    #- chmod 400 $SSH
-  #script:
-    #- ssh -o StrictHostKeyChecking=no -i $SSH ubuntu@$AWS_IP_ADDRESS "
-        #docker login -u $REGISTRY_USER -p $REGISTRY_PASS &&
-        #docker ps -aq | xargs docker stop | xargs docker rm &&
-        ##docker run -d -p 8000:8000 $IMAGE_NAME:$IMAGE_TAG"
+# -------------------
+# DEPLOY TO SERVER
+# -------------------
 deploy:
   stage: deploy
   before_script:
-    - chmod 400 $SSH
-    - scp -o StrictHostKeyChecking=no -i $SSH ./docker-compose.yml ubuntu@$AWS_IP_ADDRESS:/home/ubuntu
-
-  variables:
-    IMAGE_NAME: pranavdazzler007/gitlab-pythondjango
-    IMAGE_TAG: "${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHORT_SHA}"
-
+    - chmod 600 $SSH
+    - scp -o StrictHostKeyChecking=no -i $SSH docker-compose.yml ubuntu@$AWS_IP_ADDRESS:/home/ubuntu/docker-compose.yml
   script:
     - ssh -o StrictHostKeyChecking=no -i $SSH ubuntu@$AWS_IP_ADDRESS "
-      docker login -u $REGISTRY_USER -p $REGISTRY_PASS &&
-      
-      export DC_IMAGE_NAME=$IMAGE_NAME &&
-      export DC_IMAGE_TAG=$IMAGE_TAG &&
+        docker login -u $REGISTRY_USER -p $REGISTRY_PASS &&
 
-      docker compose down &&
-      docker compose up -d"
+        export BACKEND_IMAGE=$BACKEND_IMAGE &&
+        export FRONTEND_IMAGE=$FRONTEND_IMAGE &&
+        export IMAGE_TAG=$IMAGE_TAG &&
+
+        docker compose down &&
+        docker compose pull &&
+        docker compose up -d
+      "
