@@ -48,3 +48,10 @@ Copy everything, including:
 In GitLab UI:
 
 Project → Settings → CI/CD → Variables → Add variable
+
+
+
+
+
+docker-compose build
+docker-compose up -d

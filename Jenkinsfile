@@ -1,0 +1,101 @@
+pipeline {
+  agent any
+
+  environment {
+    DOCKERHUB_USER = "your_dockerhub"
+    BACKEND_IMAGE = "mern-backend"
+    FRONTEND_IMAGE = "mern-frontend"
+    SONAR_TOKEN = credentials('sonar-token')
+  }
+
+  stages {
+
+    stage('Checkout') {
+      steps {
+        git url: 'https://github.com/youruser/mern-budget-tracker-project.git'
+      }
+    }
+
+    stage('ESLint & Unit Tests') {
+      steps {
+        sh '''
+        cd backend
+        npm install
+        npm run lint
+        npm test
+        '''
+      }
+    }
+
+    stage('npm audit') {
+      steps {
+        sh '''
+        cd backend
+        npm audit --audit-level=high
+        '''
+      }
+    }
+
+    stage('SonarQube Analysis') {
+      steps {
+        sh '''
+        sonar-scanner \
+        -Dsonar.projectKey=mern \
+        -Dsonar.sources=. \
+        -Dsonar.host.url=http://<sonarqube-ip>:9000 \
+        -Dsonar.login=$SONAR_TOKEN
+        '''
+      }
+    }
+
+    stage('Build Docker Images') {
+      steps {
+        script {
+          docker.build("${DOCKERHUB_USER}/${BACKEND_IMAGE}:${BUILD_NUMBER}", "backend")
+          docker.build("${DOCKERHUB_USER}/${FRONTEND_IMAGE}:${BUILD_NUMBER}", "frontend")
+        }
+      }
+    }
+
+    stage('Trivy Scan') {
+      steps {
+        sh '''
+        trivy image ${DOCKERHUB_USER}/${BACKEND_IMAGE}:${BUILD_NUMBER}
+        trivy image ${DOCKERHUB_USER}/${FRONTEND_IMAGE}:${BUILD_NUMBER}
+        '''
+      }
+    }
+
+    stage('Push Images') {
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: 'dockerhub-creds',
+          usernameVariable: 'USER',
+          passwordVariable: 'PASS'
+        )]) {
+          sh '''
+          echo $PASS | docker login -u $USER --password-stdin
+          docker push ${DOCKERHUB_USER}/${BACKEND_IMAGE}:${BUILD_NUMBER}
+          docker push ${DOCKERHUB_USER}/${FRONTEND_IMAGE}:${BUILD_NUMBER}
+          '''
+        }
+      }
+    }
+
+    stage('Update GitOps Repo') {
+      steps {
+        sh '''
+        git clone https://github.com/youruser/mern-budget-tracker-k8s.git
+        cd mern-budget-tracker-k8s
+
+        sed -i "s|image:.*backend.*|image: ${DOCKERHUB_USER}/${BACKEND_IMAGE}:${BUILD_NUMBER}|" backend-deployment.yaml
+        sed -i "s|image:.*frontend.*|image: ${DOCKERHUB_USER}/${FRONTEND_IMAGE}:${BUILD_NUMBER}|" frontend-deployment.yaml
+
+        git add .
+        git commit -m "Update image tag to ${BUILD_NUMBER}"
+        git push
+        '''
+      }
+    }
+  }
+}
