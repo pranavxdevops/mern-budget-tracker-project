@@ -39,10 +39,10 @@ pipeline {
 stage('SonarQube Analysis') {
   steps {
     sh '''
-    set -e
-    cd backend
-    sonar-scanner \
-      -Dsonar.projectKey=Mern \
+    docker run --rm \
+      -v "$PWD/backend:/usr/src" \
+      sonarsource/sonar-scanner-cli \
+      -Dsonar.projectKey=mern \
       -Dsonar.sources=. \
       -Dsonar.host.url=http://65.2.130.138:9000 \
       -Dsonar.login=$SONAR_TOKEN
