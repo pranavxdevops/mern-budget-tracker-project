@@ -44,7 +44,7 @@ stage('SonarQube Analysis') {
       sonarsource/sonar-scanner-cli \
       -Dsonar.projectKey=Mern \
       -Dsonar.sources=. \
-      -Dsonar.host.url=http://65.2.130.138:9000 \
+      -Dsonar.host.url=$SONAR_HOST \
       -Dsonar.login=$SONAR_TOKEN
     '''
       }
