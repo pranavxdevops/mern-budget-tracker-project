@@ -86,15 +86,17 @@ stage('SonarQube Analysis') {
 
     stage('Update GitOps Repo') {
   steps {
-    withCredentials([usernamePassword(
-      credentialsId: 'github-creds',
-      usernameVariable: 'GIT_USER',
-      passwordVariable: 'GIT_PASS'
-    )]) {
+    dir('gitops') {
+      checkout([
+        $class: 'GitSCM',
+        branches: [[name: '*/main']],
+        userRemoteConfigs: [[
+          url: 'https://github.com/pranavxdevops/mern-budget-tracker-k8s.git',
+          credentialsId: 'github-creds'
+        ]]
+      ])
+
       sh '''
-      set -e
-      git clone https://$GIT_USER:$GIT_PASS@github.com/pranavxdevops/mern-budget-tracker-k8s.git
-      cd mern-budget-tracker-k8s
       cd "Kubernetes files"
 
       sed -i "s|image:.*backend.*|image: ${DOCKERHUB_USER}/${BACKEND_IMAGE}:${BUILD_NUMBER}|" backend-deployment.yaml
@@ -104,7 +106,7 @@ stage('SonarQube Analysis') {
       git config user.name "Jenkins CI"
 
       git add .
-      git commit -m "Update image tag to ${BUILD_NUMBER}"
+      git commit -m "Update image tag to ${BUILD_NUMBER}" || echo "No changes to commit"
       git push
       '''
       }
