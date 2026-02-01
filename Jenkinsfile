@@ -39,6 +39,7 @@ pipeline {
 stage('SonarQube Analysis') {
   steps {
     sh '''
+    set -e
     cd backend
     sonar-scanner \
       -Dsonar.projectKey=Mern \
