@@ -95,7 +95,7 @@ stage('SonarQube Analysis') {
       set -e
       git clone https://$GIT_USER:$GIT_PASS@github.com/pranavxdevops/mern-budget-tracker-k8s.git
       cd mern-budget-tracker-k8s
-      cd Kubernetes files
+      cd "Kubernetes files"
 
       sed -i "s|image:.*backend.*|image: ${DOCKERHUB_USER}/${BACKEND_IMAGE}:${BUILD_NUMBER}|" backend-deployment.yaml
       sed -i "s|image:.*frontend.*|image: ${DOCKERHUB_USER}/${FRONTEND_IMAGE}:${BUILD_NUMBER}|" frontend-deployment.yaml
@@ -110,4 +110,5 @@ stage('SonarQube Analysis') {
       }
     }
   }
-}
+
+  
