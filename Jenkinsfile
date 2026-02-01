@@ -42,7 +42,7 @@ stage('SonarQube Analysis') {
     docker run --rm \
       -v "$PWD/backend:/usr/src" \
       sonarsource/sonar-scanner-cli \
-      -Dsonar.projectKey=mern \
+      -Dsonar.projectKey=Mern \
       -Dsonar.sources=. \
       -Dsonar.host.url=http://65.2.130.138:9000 \
       -Dsonar.login=$SONAR_TOKEN
