@@ -90,8 +90,11 @@ stage('SonarQube Analysis') {
       checkout([
         $class: 'GitSCM',
         branches: [[name: '*/main']],
+        extensions: [
+          [$class: 'LocalBranch', localBranch: 'main']
+        ],
         userRemoteConfigs: [[
-          url: 'https://github.com/pranavxdevops/mern-budget-tracker-project.git',
+          url: 'https://github.com/pranavxdevops/mern-budget-tracker-k8s.git',
           credentialsId: 'github-creds'
         ]]
       ])
@@ -99,15 +102,17 @@ stage('SonarQube Analysis') {
       sh '''
       cd "Kubernetes files"
 
-      sed -i "s|image:.*backend.*|image: ${DOCKERHUB_USER}/${BACKEND_IMAGE}:${BUILD_NUMBER}|" backend-deployment.yaml
-      sed -i "s|image:.*frontend.*|image: ${DOCKERHUB_USER}/${FRONTEND_IMAGE}:${BUILD_NUMBER}|" frontend-deployment.yaml
+      sed -i "s|image: .*mern-backend.*|image: ${DOCKERHUB_USER}/${BACKEND_IMAGE}:${BUILD_NUMBER}|" backend-deployment.yaml
+      sed -i "s|image: .*mern-frontend.*|image: ${DOCKERHUB_USER}/${FRONTEND_IMAGE}:${BUILD_NUMBER}|" frontend-deployment.yaml
 
       git config user.email "jenkins@ci.local"
       git config user.name "Jenkins CI"
 
+      git status
       git add .
       git commit -m "Update image tag to ${BUILD_NUMBER}" || echo "No changes to commit"
-      git push
+
+      git push origin main
       '''
       }
     }
