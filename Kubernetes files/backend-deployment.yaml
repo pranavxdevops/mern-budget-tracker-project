@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: yourdockerhub/mern-backend:1
+        image: pranavdazzler/mern-backend:29
         imagePullPolicy: Always
         ports:
         - containerPort: 5000

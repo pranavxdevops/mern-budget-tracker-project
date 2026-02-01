@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: yourdockerhub/mern-frontend:1
+        image: pranavdazzler/mern-frontend:29
         imagePullPolicy: Always
         ports:
         - containerPort: 80
