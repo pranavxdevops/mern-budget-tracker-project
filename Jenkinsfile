@@ -85,18 +85,27 @@ stage('SonarQube Analysis') {
     }
 
     stage('Update GitOps Repo') {
-      steps {
-        sh '''
-        git clone https://github.com/youruser/mern-budget-tracker-k8s.git
-        cd mern-budget-tracker-k8s
+  steps {
+    withCredentials([usernamePassword(
+      credentialsId: 'github-creds',
+      usernameVariable: 'GIT_USER',
+      passwordVariable: 'GIT_PASS'
+    )]) {
+      sh '''
+      set -e
+      git clone https://$GIT_USER:$GIT_PASS@github.com/pranavxdevops/mern-budget-tracker-k8s.git
+      cd mern-budget-tracker-k8s
 
-        sed -i "s|image:.*backend.*|image: ${DOCKERHUB_USER}/${BACKEND_IMAGE}:${BUILD_NUMBER}|" backend-deployment.yaml
-        sed -i "s|image:.*frontend.*|image: ${DOCKERHUB_USER}/${FRONTEND_IMAGE}:${BUILD_NUMBER}|" frontend-deployment.yaml
+      sed -i "s|image:.*backend.*|image: ${DOCKERHUB_USER}/${BACKEND_IMAGE}:${BUILD_NUMBER}|" backend-deployment.yaml
+      sed -i "s|image:.*frontend.*|image: ${DOCKERHUB_USER}/${FRONTEND_IMAGE}:${BUILD_NUMBER}|" frontend-deployment.yaml
 
-        git add .
-        git commit -m "Update image tag to ${BUILD_NUMBER}"
-        git push
-        '''
+      git config user.email "jenkins@ci.local"
+      git config user.name "Jenkins CI"
+
+      git add .
+      git commit -m "Update image tag to ${BUILD_NUMBER}"
+      git push
+      '''
       }
     }
   }
