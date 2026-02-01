@@ -84,36 +84,41 @@ stage('SonarQube Analysis') {
       }
     }
 
-    stage('Update GitOps Repo') {
+   stage('Update GitOps Repo') {
   steps {
-    dir('gitops') {
-      checkout([
-        $class: 'GitSCM',
-        branches: [[name: '*/main']],
-        extensions: [
-          [$class: 'LocalBranch', localBranch: 'main']
-        ],
-        userRemoteConfigs: [[
-          url: 'https://github.com/pranavxdevops/mern-budget-tracker-project.git',
-          credentialsId: 'github-creds'
-        ]]
-      ])
+    withCredentials([usernamePassword(
+      credentialsId: 'github-creds',
+      usernameVariable: 'GIT_USER',
+      passwordVariable: 'GIT_PASS'
+    )]) {
+      dir('gitops') {
+        checkout([
+          $class: 'GitSCM',
+          branches: [[name: '*/main']],
+          extensions: [
+            [$class: 'LocalBranch', localBranch: 'main']
+          ],
+          userRemoteConfigs: [[
+            url: 'https://github.com/pranavxdevops/mern-budget-tracker-project.git',
+            credentialsId: 'github-creds'
+          ]]
+        ])
 
-      sh '''
-      cd "Kubernetes files"
+        sh '''
+        cd "Kubernetes files"
 
-      sed -i "s|image: .*mern-backend.*|image: ${DOCKERHUB_USER}/${BACKEND_IMAGE}:${BUILD_NUMBER}|" backend-deployment.yaml
-      sed -i "s|image: .*mern-frontend.*|image: ${DOCKERHUB_USER}/${FRONTEND_IMAGE}:${BUILD_NUMBER}|" frontend-deployment.yaml
+        sed -i "s|image: .*mern-backend.*|image: ${DOCKERHUB_USER}/${BACKEND_IMAGE}:${BUILD_NUMBER}|" backend-deployment.yaml
+        sed -i "s|image: .*mern-frontend.*|image: ${DOCKERHUB_USER}/${FRONTEND_IMAGE}:${BUILD_NUMBER}|" frontend-deployment.yaml
 
-      git config user.email "jenkins@ci.local"
-      git config user.name "Jenkins CI"
+        git config user.email "jenkins@ci.local"
+        git config user.name "Jenkins CI"
 
-      git status
-      git add .
-      git commit -m "Update image tag to ${BUILD_NUMBER}" || echo "No changes to commit"
+        git add .
+        git commit -m "Update image tag to ${BUILD_NUMBER}" || echo "No changes to commit"
 
-      git push origin main
-      '''
+        # Secure push using injected credentials
+        git push https://$GIT_USER:$GIT_PASS@github.com/pranavxdevops/mern-budget-tracker-project.git main
+        '''
       }
     }
   }
