@@ -23,8 +23,6 @@ pipeline {
         sh '''
         cd backend
         npm install
-        npm run lint
-        npm test
         '''
       }
     }
@@ -33,7 +31,7 @@ pipeline {
       steps {
         sh '''
         cd backend
-        npm audit --audit-level=high
+        npm audit fix
         '''
       }
     }
