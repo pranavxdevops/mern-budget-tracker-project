@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    DOCKERHUB_USER = "your_dockerhub"
+    DOCKERHUB_USER = "pranavdazzler"
     BACKEND_IMAGE = "mern-backend"
     FRONTEND_IMAGE = "mern-frontend"
     SONAR_TOKEN = credentials('sonar-token')
