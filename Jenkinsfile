@@ -36,15 +36,16 @@ pipeline {
       }
     }
 
-    stage('SonarQube Analysis') {
-      steps {
-        sh '''
-        sonar-scanner \
-        -Dsonar.projectKey=mern \
-        -Dsonar.sources=. \
-        -Dsonar.host.url=http://<sonarqube-ip>:9000 \
-        -Dsonar.login=$SONAR_TOKEN
-        '''
+stage('SonarQube Analysis') {
+  steps {
+    sh '''
+    cd backend
+    sonar-scanner \
+      -Dsonar.projectKey=Mern \
+      -Dsonar.sources=. \
+      -Dsonar.host.url=http://65.2.130.138:9000 \
+      -Dsonar.login=$SONAR_TOKEN
+    '''
       }
     }
 
