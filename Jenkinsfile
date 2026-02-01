@@ -94,7 +94,7 @@ stage('SonarQube Analysis') {
           [$class: 'LocalBranch', localBranch: 'main']
         ],
         userRemoteConfigs: [[
-          url: 'https://github.com/pranavxdevops/mern-budget-tracker-k8s.git',
+          url: 'https://github.com/pranavxdevops/mern-budget-tracker-project.git',
           credentialsId: 'github-creds'
         ]]
       ])
