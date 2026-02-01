@@ -12,7 +12,9 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        git url: 'https://github.com/youruser/mern-budget-tracker-project.git'
+    git branch: 'main',
+    url: 'https://github.com/pranavxdevops/mern-budget-tracker-project.git',
+    credentialsId: 'github-creds'
       }
     }
 
